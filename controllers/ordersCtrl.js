@@ -48,34 +48,72 @@ export const createOrderCtrl = asyncHandler(async (req, res) => {
     }); 
 
     //make payment
+      //convert order items to have same structure that stripe need
+  const convertedOrders = orderItems.map((item) => {
+    return {
+      price_data: {
+        currency: "usd",
+        product_data: {
+          name: item?.name,
+          description: item?.description,
+        },
+        unit_amount: item?.price * 100,
+      },
+      quantity: item?.qty,
+    };
+  });
     const session = await stripe.checkout.sessions.create({
-        line_items: [
-            {
-                price_data: {
-                    currency: "usd",
-                    product_data: {
-                        name: "T-shirt",
-                        description: "what a good T-shirt",
-                    },
-                    unit_amount: 95 * 100,
-                },
-                quantity: 2,
-            }
-        ],
+        line_items: convertedOrders,
+        metadata: {
+            orderId: JSON.stringify(order?._id)
+        },
         mode: 'payment',
         success_url: "http://localhost:3000/success",
         cancel_url: "http://localhost:3000/cancel"
     });
+    console.log(order)
+    res.send({url: session.url}); 
     
-    res.send({url: session.url});
-    
-    //payment webhook
-    //update the user order
-    // res.json({
-    //     success: true,
-    //     message: "Order created",
-    //     order,
-    //     user
-    // });
+
 
 }) ; 
+
+export const getAllordersCtrl = asyncHandler(async (req, res) => {
+  // find all orders
+  const orders = await Order.find();
+  res.json({
+    success: true,
+    message: "All orders",
+    orders
+  })
+});
+
+export const getSingleOrderCtrl = asyncHandler(async (req, res) => {
+  //get the id from prams
+  const id = req.params.id;
+  const order = await Order.findById(id);
+
+  //send response 
+  res.status(200).json({
+    success: true,
+    message: "Single order",
+    order
+  })
+});
+
+export const updateOrderCtrl = asyncHandler(async (req, res) => {
+  const id = req.params.id;
+
+  //update
+  const updatedOrder = await Order.findByIdAndUpdate(id, {
+    status: req.body.status
+  }, {
+    new: true
+  });
+
+  res.status(200).json({
+    suscess: true,
+    message: "Order updated",
+    updatedOrder
+  })
+});

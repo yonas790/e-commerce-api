@@ -2,8 +2,7 @@ import User from "../model/User.js";
 import bcrypt from 'bcryptjs';
 import asyncHandler from 'express-async-handler';
 import generateToken from "../utils/generateToken.js";
-import { verifyToken } from "../utils/verifyToken.js";
-import { getTokenFromHeader } from "../utils/getTokenFromHeader.js";
+
 
 
 export const registerUserCtrl = asyncHandler(async (req, res) => {
@@ -46,14 +45,15 @@ export const loginUserCtrl = asyncHandler(async (req, res) => {
 });
 
 export const getUserProfileCtrl = asyncHandler(async (req, res) => {
-    const token = getTokenFromHeader(req);
-    
-    const verified = verifyToken(token);
-    console.log(verified)
+    //find user
+    const user = await User.findById(req.userAuthId).populate("orders");
 
-    res.json({
-        msg: "Welcome to Profile Page"
-    });
+    res.status(200).json({
+        status: "success",
+        message: "User profile fetched successfully",
+        user
+    })
+
 });
 
 export const updateShippingAddressCtr = asyncHandler(async (req, res) => {
