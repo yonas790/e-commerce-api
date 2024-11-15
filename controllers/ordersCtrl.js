@@ -1,7 +1,13 @@
+import dotenv from "dotenv";
+dotenv.config();
 import Order from "../model/Order.js";
 import asyncHandler from "express-async-handler";
 import User from "../model/User.js";
 import Product from "../model/Product.js"
+import Stripe from "stripe";
+
+//stripe instance
+const stripe = new Stripe(process.env.STRIPE_KEY);
 
 export const createOrderCtrl = asyncHandler(async (req, res) => {
      //get the payload(customer, orderItems, shippingAddress, totalPrice)
@@ -42,13 +48,34 @@ export const createOrderCtrl = asyncHandler(async (req, res) => {
     }); 
 
     //make payment
+    const session = await stripe.checkout.sessions.create({
+        line_items: [
+            {
+                price_data: {
+                    currency: "usd",
+                    product_data: {
+                        name: "T-shirt",
+                        description: "what a good T-shirt",
+                    },
+                    unit_amount: 95 * 100,
+                },
+                quantity: 2,
+            }
+        ],
+        mode: 'payment',
+        success_url: "http://localhost:3000/success",
+        cancel_url: "http://localhost:3000/cancel"
+    });
+    
+    res.send({url: session.url});
+    
     //payment webhook
     //update the user order
-    res.json({
-        success: true,
-        message: "Order created",
-        order,
-        user
-    });
+    // res.json({
+    //     success: true,
+    //     message: "Order created",
+    //     order,
+    //     user
+    // });
 
 }) ; 
