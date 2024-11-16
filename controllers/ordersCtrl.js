@@ -13,7 +13,7 @@ const stripe = new Stripe(process.env.STRIPE_KEY);
 export const createOrderCtrl = asyncHandler(async (req, res) => {
   //get cooupon
   const { coupon } = req?.query;
-    const couponFound = await Coupon.findOne({ code: coupon?.toUpperCase() });
+  const couponFound = await Coupon.findOne({ code: coupon?.toUpperCase() });
   if (couponFound?.isExpired) {
     throw new Error("Coupon has expired");
   }
@@ -130,5 +130,55 @@ export const updateOrderCtrl = asyncHandler(async (req, res) => {
     suscess: true,
     message: "Order updated",
     updatedOrder
+  })
+});
+
+export const getOrderStatsCtrl = asyncHandler(async (req, res) => {
+  //get sales stats
+  const orders = await Order.aggregate([{
+    $group: {
+      _id: null,
+      totalSales: {
+        $sum: "$totalPrice"
+      },
+      minimumSale: {
+        $min: "$totalPrice"
+      },
+      maximumSale: {
+        $max: "$totalPrice"
+      },
+      averageSale: {
+        $avg: "$totalPrice"
+      }
+    }
+  }]);
+
+  //get the date
+  const date = new Date();
+  const today = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const saleToday = await Order.aggregate([
+    {
+      $match: {
+        createdAt: {
+          $gte: today
+        }
+      }
+    }, {
+      $group: {
+        _id: null,
+        totalSales: {
+          $sum: "$totalPrice"
+        }
+      }
+    }
+
+  ]);
+
+  //send response
+  res.status(200).json({
+    success: true,
+    message: "Stats of Orders",
+    orders,
+    saleToday
   })
 });
