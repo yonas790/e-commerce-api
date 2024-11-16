@@ -29,6 +29,10 @@ export const createProductCtrl = asyncHandler(async (req, res) => {
     if (!brandFound) {
         throw new Error ("Brand not found, please create category first or check category name");
     };
+
+    //collect all uploaded image URLs
+    const imageUrls = req.files?.map((file) => file.path)
+
     //create product
     const product = await Product.create({
         name,
@@ -39,7 +43,8 @@ export const createProductCtrl = asyncHandler(async (req, res) => {
         user: req.userAuthId,
         price,
         totalQty,
-        brand
+        brand,
+        images: imageUrls
     });
     //push the product into category
     categoryFound.products.push(product);
