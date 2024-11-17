@@ -4,5 +4,5 @@ import http from 'http'
 const server = http.createServer(app);
 
 server.listen(process.env.PORT, ()=>{
-    console.log(`server is running at ${PORT}`);
+    console.log(`server is running at ${process.env.PORT}`);
 });
