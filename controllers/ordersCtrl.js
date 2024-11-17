@@ -13,13 +13,17 @@ const stripe = new Stripe(process.env.STRIPE_KEY);
 export const createOrderCtrl = asyncHandler(async (req, res) => {
   //get cooupon
   const { coupon } = req?.query;
-  const couponFound = await Coupon.findOne({ code: coupon?.toUpperCase() });
-  if (couponFound?.isExpired) {
-    throw new Error("Coupon has expired");
+  let couponFound = null;
+  if (coupon) {
+    couponFound = await Coupon.findOne({ code: coupon?.toUpperCase() });
+    if (couponFound?.isExpired) {
+      throw new Error("Coupon has expired");
+    }
+    if (!couponFound) {
+      throw new Error("coupon does not exists")
+    }
   }
-  if (!couponFound) {
-    throw new Error("coupon does not exists")
-  }
+  
 
   //get discount
   const discount = couponFound?.discount / 100;
@@ -86,7 +90,7 @@ export const createOrderCtrl = asyncHandler(async (req, res) => {
         success_url: "http://localhost:3000/success",
         cancel_url: "http://localhost:3000/cancel"
     });
-    console.log(order)
+    
     res.send({url: session.url}); 
     
 
